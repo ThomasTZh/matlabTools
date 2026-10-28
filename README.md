@@ -52,6 +52,7 @@ releases than `savePdf`. `frameViewer3D` uses base MATLAB only.
 ```text
 matlabTools/
 ├─ README.md                  % this file
+├─ CREDITS.md                 % third-party attributions and licences
 ├─ AGENTS.md                  % coding conventions for AI-assisted work
 └─ scripts/                   % all MATLAB code
    ├─ lib/
@@ -198,15 +199,17 @@ uiwait(hFig);
 
 ## Third-party packages (`external`)
 
-| Package | Entry points | Licence and provenance | Used by |
-|---|---|---|---|
-| GMSD | `GMSD` | Implementation of Xue, Zhang, Mou and Bovik, "Gradient Magnitude Similarity Deviation" (2014). No licence file in the folder. | `calGmsd` |
-| natsortfiles | `natsort`, `natsortfiles` | (c) Stephen Cobeldick, BSD-style terms in `license.txt`. | `myGetFiles`, `uigetfolder` |
-| zoomed_axes | `zoomed_axes` (classdef) | Supplied with README, examples and doc image. No licence or copyright statement in the folder. | none in this repository |
+| Package | Author | Source | Licence | Used by |
+|---|---|---|---|---|
+| GMSD | Wufeng Xue, Lei Zhang, Xuanqin Mou, Alan C. Bovik | [PolyU distribution page](https://web.comp.polyu.edu.hk/cslzhang/IQA/GMSD/GMSD.htm); IEEE TIP 23(2):684-695, 2014 | None stated | `calGmsd` |
+| natsortfiles | Stephen Cobeldick | [File Exchange 47434](https://uk.mathworks.com/matlabcentral/fileexchange/47434-natural-order-filename-sort) | BSD 3-Clause, in `license.txt` | `myGetFiles`, `uigetfolder` |
+| zoomed_axes | Caleb E. Thomas | [File Exchange 182602](https://uk.mathworks.com/matlabcentral/fileexchange/182602-zoomed-axes) | BSD 3-Clause, in `license.txt` | none |
+
+Full citations, version notes and licence details are in `CREDITS.md`.
 
 `findPeaksWidthLocs` under `lib/signal` is a modified copy of the MathWorks
 `findpeaks` function and keeps the original copyright notice. Treat it as
-third-party derived code when redistributing.
+third-party derived code when redistributing. See `CREDITS.md`.
 
 ## Conventions
 
@@ -240,8 +243,8 @@ third-party derived code when redistributing.
   `calFWHM` (independent). Pick one as canonical before relying on them
   interchangeably.
 - No automated test suite is included.
-- `GMSD` and `zoomed_axes` carry no licence statement. Add one before
-  redistributing either package.
+- `GMSD` has no licence statement from its authors, so it is included with
+  attribution only. Check with the authors before redistributing it elsewhere.
 
 ## Adding a new function
 
