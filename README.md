@@ -52,6 +52,7 @@ releases than `savePdf`. `frameViewer3D` uses base MATLAB only.
 ```text
 matlabTools/
 ├─ README.md                  % this file
+├─ LICENSE                    % BSD 3-Clause for first-party code
 ├─ CREDITS.md                 % third-party attributions and licences
 ├─ AGENTS.md                  % coding conventions for AI-assisted work
 └─ scripts/                   % all MATLAB code
@@ -254,6 +255,23 @@ third-party derived code when redistributing. See `CREDITS.md`.
 3. Re-run `addpath(genpath('<path to matlabTools>/scripts'))` so the new
    subfolder is picked up.
 4. Add a row to the relevant table in this README.
+
+## Licence
+
+First-party code in `lib/` and `toolboxes/` is released under the BSD 3-Clause
+Licence, Copyright (c) 2026 Thomas. The full text is in `LICENSE`.
+
+That licence does not cover the third-party and derived files:
+
+- `scripts/external/natsortfiles/` is BSD 3-Clause, Copyright (c) Stephen
+  Cobeldick, see its `license.txt`.
+- `scripts/external/zoomed_axes/` is BSD 3-Clause, Copyright 2025 Caleb E.
+  Thomas, see its `license.txt`.
+- `scripts/external/GMSD/GMSD.m` carries no licence from its authors.
+- `scripts/lib/signal/findPeaksWidthLocs.m` is derived from the MathWorks
+  `findpeaks` function and stays subject to the MathWorks terms.
+
+See `CREDITS.md` for authors, sources and citations.
 
 ## Compatibility
 
