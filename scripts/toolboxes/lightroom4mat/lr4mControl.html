@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        /* Keep the HTML control palette aligned with editorPalette in
+           lr4mCreateEditorUI.m. The value field deliberately uses the same
+           background so it reads as text until it receives keyboard focus. */
+        :root {
+            --sage-background: #e7eddc;
+            --sage-track: #718760;
+            --sage-thumb: #40583d;
+            --sage-button: #c8d6b8;
+            --sage-button-hover: #b8c9a5;
+            --sage-text: #2e3b2d;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            color: var(--sage-text);
+            background: var(--sage-background);
+            font-family: "Segoe UI", Arial, sans-serif;
+            font-size: 12px;
+        }
+
+        .control {
+            /* Absolute positioning aligns Reset with the exact midpoint of
+               the symmetric -10..10 adjustment track. */
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-height: 46px;
+        }
+
+        .name {
+            position: absolute;
+            top: 2px;
+            left: 1px;
+            max-width: calc(50% - 22px);
+            overflow: hidden;
+            font-weight: 500;
+            line-height: 20px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .reset {
+            position: absolute;
+            top: 1px;
+            left: 50%;
+            width: 28px;
+            height: 21px;
+            padding: 0;
+            border: 0;
+            border-radius: 10px;
+            color: var(--sage-text);
+            background: var(--sage-button);
+            cursor: pointer;
+            font: 14px/21px "Segoe UI Symbol", "Segoe UI", sans-serif;
+            transform: translateX(-50%);
+        }
+
+        .reset:hover,
+        .reset:focus-visible {
+            background: var(--sage-button-hover);
+            outline: 1px solid var(--sage-track);
+        }
+
+        .value {
+            position: absolute;
+            top: 1px;
+            right: 0;
+            width: 43px;
+            height: 21px;
+            padding: 0 1px 0 0;
+            border: 0;
+            border-radius: 0;
+            outline: 0;
+            color: var(--sage-text);
+            background: var(--sage-background);
+            font: 12px/21px "Segoe UI", Arial, sans-serif;
+            text-align: right;
+            appearance: textfield;
+        }
+
+        .value::-webkit-inner-spin-button,
+        .value::-webkit-outer-spin-button {
+            margin: 0;
+            appearance: none;
+        }
+
+        .value:focus {
+            box-shadow: inset 0 -1px 0 var(--sage-track);
+        }
+
+        .slider {
+            position: absolute;
+            right: 0;
+            bottom: 3px;
+            left: 0;
+            width: 100%;
+            height: 22px;
+            margin: 0;
+            padding: 0;
+            border: 0;
+            outline: 0;
+            background: transparent;
+            cursor: pointer;
+            appearance: none;
+        }
+
+        .slider::-webkit-slider-runnable-track {
+            /* uihtml uses Chromium in the supported MATLAB release. Styling
+               the WebKit pseudo-elements removes the native grey track. */
+            width: 100%;
+            height: 3px;
+            border: 0;
+            border-radius: 2px;
+            background: var(--sage-track);
+        }
+
+        .slider::-webkit-slider-thumb {
+            width: 13px;
+            height: 13px;
+            margin-top: -5px;
+            border: 2px solid var(--sage-background);
+            border-radius: 50%;
+            background: var(--sage-thumb);
+            box-shadow: 0 0 0 1px var(--sage-thumb);
+            appearance: none;
+        }
+
+        .slider:focus-visible::-webkit-slider-thumb {
+            box-shadow: 0 0 0 2px var(--sage-background),
+                0 0 0 4px var(--sage-track);
+        }
+
+        .control.disabled {
+            opacity: 0.42;
+        }
+
+        .control.disabled .slider,
+        .control.disabled .reset,
+        .control.disabled .value {
+            cursor: default;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="control" id="control">
+        <span class="name" id="name"></span>
+        <button class="reset" id="reset" type="button"
+            title="Reset this adjustment to 0" aria-label="Reset to zero">&#8634;</button>
+        <input class="value" id="value" type="number" aria-label="Adjustment value">
+        <input class="slider" id="slider" type="range" aria-label="Adjustment slider">
+    </div>
+
+    <script type="text/javascript">
+        function setup(htmlComponent) {
+            window.htmlComponent = htmlComponent;
+            const control = document.getElementById("control");
+            const name = document.getElementById("name");
+            const reset = document.getElementById("reset");
+            const value = document.getElementById("value");
+            const slider = document.getElementById("slider");
+
+            function numberOr(input, fallback) {
+                const converted = Number(input);
+                return Number.isFinite(converted) ? converted : fallback;
+            }
+
+            function settings() {
+                // Normalize the MATLAB payload in one place. Defaults make
+                // the component resilient while MATLAB replaces its Data.
+                const data = htmlComponent.Data || {};
+                return {
+                    Name: String(data.Name || ""),
+                    Value: numberOr(data.Value, 0),
+                    Minimum: numberOr(data.Minimum, -10),
+                    Maximum: numberOr(data.Maximum, 10),
+                    Step: numberOr(data.Step, 0.1),
+                    Enabled: data.Enabled !== false && data.Enabled !== 0,
+                    ShowReset: data.ShowReset !== false && data.ShowReset !== 0,
+                    ShowValue: data.ShowValue !== false && data.ShowValue !== 0,
+                    ResetValue: numberOr(data.ResetValue, 0)
+                };
+            }
+
+            function clampAndRound(input, data) {
+                // Quantize relative to Minimum so integer slice sliders and
+                // one-decimal adjustment sliders share the same component.
+                const raw = numberOr(input, data.Value);
+                const limited = Math.min(data.Maximum, Math.max(data.Minimum, raw));
+                const steps = Math.round((limited - data.Minimum) / data.Step);
+                const rounded = data.Minimum + steps * data.Step;
+                return Number(Math.min(data.Maximum, Math.max(data.Minimum, rounded)).toFixed(10));
+            }
+
+            function displayValue(input, data) {
+                const decimals = data.Step < 1 ? 1 : 0;
+                return input.toFixed(decimals);
+            }
+
+            function render() {
+                // DataChanged is MATLAB-to-JavaScript only. Rendering does
+                // not publish, which prevents a callback feedback loop.
+                const data = settings();
+                const currentValue = clampAndRound(data.Value, data);
+                name.textContent = data.Name;
+                slider.min = String(data.Minimum);
+                slider.max = String(data.Maximum);
+                slider.step = String(data.Step);
+                slider.value = String(currentValue);
+                value.min = String(data.Minimum);
+                value.max = String(data.Maximum);
+                value.step = String(data.Step);
+                value.value = displayValue(currentValue, data);
+                slider.disabled = !data.Enabled;
+                value.disabled = !data.Enabled;
+                reset.disabled = !data.Enabled;
+                control.classList.toggle("disabled", !data.Enabled);
+                reset.classList.toggle("hidden", !data.ShowReset);
+                value.classList.toggle("hidden", !data.ShowValue);
+            }
+
+            function publish(input, phase) {
+                const data = settings();
+                if (!data.Enabled) {
+                    return;
+                }
+                const currentValue = clampAndRound(input, data);
+                slider.value = String(currentValue);
+                value.value = displayValue(currentValue, data);
+                // Replace the complete payload. MATLAB callbacks can then
+                // treat every event as a self-contained state transition.
+                htmlComponent.Data = {
+                    Name: data.Name,
+                    Value: currentValue,
+                    Minimum: data.Minimum,
+                    Maximum: data.Maximum,
+                    Step: data.Step,
+                    Enabled: data.Enabled,
+                    ShowReset: data.ShowReset,
+                    ShowValue: data.ShowValue,
+                    ResetValue: data.ResetValue,
+                    Phase: phase
+                };
+            }
+
+            slider.addEventListener("input", function () {
+                publish(slider.value, "moving");
+            });
+            slider.addEventListener("change", function () {
+                publish(slider.value, "changed");
+            });
+            value.addEventListener("change", function () {
+                publish(value.value, "changed");
+            });
+            value.addEventListener("keydown", function (event) {
+                if (event.key === "Enter") {
+                    value.blur();
+                }
+            });
+            reset.addEventListener("click", function () {
+                publish(settings().ResetValue, "changed");
+            });
+            htmlComponent.addEventListener("error", function (event) {
+                console.error("MATLAB UI error:", event.Data);
+            });
+            htmlComponent.addEventListener("DataChanged", render);
+            render();
+        }
+    </script>
+</body>
+</html>

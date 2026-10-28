@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            background: transparent;
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
+
+        .toolbar {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            padding: 0 3px;
+            border: 0;
+            border-radius: 7px;
+            background: rgba(255, 255, 255, 0.55);
+        }
+
+        button {
+            height: 22px;
+            padding: 0 8px;
+            border: 0;
+            border-radius: 5px;
+            color: #273027;
+            background: transparent;
+            font: 12px/22px "Segoe UI", Arial, sans-serif;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        #actual {
+            border-left: 1px solid rgba(39, 48, 39, 0.18);
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+        }
+
+        button:hover,
+        button:focus-visible {
+            background: rgba(94, 119, 84, 0.18);
+            outline: 1px solid rgba(39, 48, 39, 0.20);
+        }
+
+        button:active {
+            background: rgba(94, 119, 84, 0.28);
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar" role="toolbar" aria-label="Image zoom controls">
+        <button id="fit" type="button" title="Fit image to viewer">Fit</button>
+        <button id="actual" type="button"
+            title="Show one image pixel per screen pixel">Actual Size</button>
+    </div>
+
+    <script type="text/javascript">
+        function setup(htmlComponent) {
+            window.htmlComponent = htmlComponent;
+            let sequence = 0;
+
+            function publish(action) {
+                sequence += 1;
+                htmlComponent.Data = {
+                    Action: action,
+                    Sequence: sequence
+                };
+            }
+
+            htmlComponent.addEventListener("DataChanged", function () {
+                const data = htmlComponent.Data || {};
+                const incoming = Number(data.Sequence);
+                if (Number.isFinite(incoming)) {
+                    sequence = Math.max(sequence, incoming);
+                }
+            });
+            htmlComponent.addEventListener("error", function (event) {
+                console.error("MATLAB UI error:", event.Data);
+            });
+
+            document.getElementById("fit").addEventListener("click",
+                function () {
+                    publish("fit");
+                });
+            document.getElementById("actual").addEventListener("click",
+                function () {
+                    publish("actualSize");
+                });
+        }
+    </script>
+</body>
+</html>
